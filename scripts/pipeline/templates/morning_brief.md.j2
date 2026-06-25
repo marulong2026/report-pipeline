@@ -1,0 +1,100 @@
+# 早盘简报 — {{ meta.trade_date }}（周{{ weekday }}）
+
+> 数据截至前日收盘（A股）/ 最新外盘数据 {{ sections.overseas.updated_at }}
+> 报告生成时间：{{ meta.generated_at }}
+> 数据质量：成功 {{ data_quality.succeeded }}/{{ data_quality.total_modules }} 模块，部分 {{ data_quality.partial }}，失败 {{ data_quality.failed }}
+
+---
+
+## 一、隔夜外盘
+
+{% if sections.overseas.data_quality.status != "all_failed" and sections.overseas.items %}
+| 市场 | 最新价 | 涨跌幅 | 备注 |
+|:--|:--:|:--:|:--|
+{% for item in sections.overseas.items %}
+| {{ item.name }} | {{ item.price or '—' }} | **{{ "%+.2f%%"|format(item.change_pct) if item.change_pct else '—' }}** | {{ item.note or '' }} |
+{% endfor %}
+
+**关键解读：**
+<!-- LLM填充：基于外盘数据的分析判断 -->
+
+**数据补充说明：**
+<!-- 如有缺失标的，在此说明 -->
+{% if sections.overseas.data_quality.missing_fields %}
+> ⚠️ 以下标的无数据：{{ sections.overseas.data_quality.missing_fields | join('、') }}
+{% endif %}
+
+{% else %}
+⚠️ **外盘数据获取失败**，如需外盘数据请手动查阅。
+
+{% endif %}
+
+---
+
+## 二、持仓行情
+
+{% if sections.portfolio.data_quality.status != "all_failed" and sections.portfolio.holdings %}
+### 2.1 持仓概览
+
+- 总持仓：{{ sections.portfolio.summary.total_holdings }} 只
+- 盈利：{{ sections.portfolio.summary.total_profit_stocks }} 只
+- 亏损：{{ sections.portfolio.summary.total_loss_stocks }} 只
+- 利润仓：{{ sections.portfolio.summary.profit_only_stocks }} 只
+- 数据周期：{{ sections.portfolio.summary.data_period }}
+
+### 2.2 持仓明细
+
+| 代码 | 名称 | 最新价 | 日涨跌 | 成本价 | 累计盈亏 | 成本偏离 | 利润仓 | 仓位 |
+|:--|:--|--:|--:|--:|--:|--:|:--:|:--|
+{% for h in sections.portfolio.holdings %}
+| {{ h.code }} | {{ h.name }} | {{ h.close or '—' }} | **{{ "%+.2f%%"|format(h.day_change_pct) if h.day_change_pct is not none else '首日' }}** | {{ h.avg_cost or '—' if h.is_profit_only else h.avg_cost or '—' }} | {{ "%+.2f%%"|format(h.cum_pct) if h.cum_pct is not none else '—' }} | {{ "%+.2f%%"|format(h.deviation_pct) if h.deviation_pct is not none else '—' }} | {{ '✅' if h.is_profit_only else '' }} | {{ '主' if 1 in h.account_ids else '' }}{{ '副' if 2 in h.account_ids else '' }} |
+{% endfor %}
+
+### 2.3 持仓分析
+
+**今日关注：**
+<!-- LLM填充：偏离幅度大的、利润仓、新仓等需关注的持仓 -->
+
+**风险提示：**
+<!-- LLM填充：基于偏离度和技术面的风险判断 -->
+
+{% else %}
+⚠️ **持仓数据获取失败**。
+
+{% endif %}
+
+---
+
+## 三、综合研判
+
+<!-- 下面为LLM填充区 -->
+
+### 3.1 市场环境判断
+
+<!-- 
+综合外盘 + 持仓数据，判断当前市场环境：
+- 偏多 / 偏空 / 震荡
+- 核心矛盾
+- 仓位建议
+-->
+
+### 3.2 持仓操作建议
+
+<!-- 
+基于成本偏离、利润仓状态、外盘影响给出建议：
+- 加仓 / 减仓 / 持有
+- 止损/止盈线提醒
+-->
+
+### 3.3 风险前置条件
+
+<!-- 
+标记以下情况是判断失效条件：
+- 如果 XX 跌破 XX 则止损
+- 如果 XX 数据不及预期则...
+-->
+
+---
+
+*本报告由数据采集流水线自动生成，所有数据来源已在 JSON 数据包中标注。*
+*分析内容由 LLM 基于已有数据生成，不构成投资建议。*
